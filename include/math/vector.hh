@@ -2,6 +2,7 @@
 #define DECAF_MATH_VECTOR_HH_
 
 #include <algorithm>
+#include <array>
 #include <string>
 #include <cmath>
 
@@ -17,7 +18,7 @@ namespace decaf
 
 		VectorN() 
 		{ 
-			memset(m_data, 0, (sizeof(T) * S));
+			std::fill(m_data.begin(), m_data.end(), T(0));
 		}
 
 		VectorN(const VectorN<T, S>& other)
@@ -56,38 +57,47 @@ namespace decaf
 		/// <returns>The squared length of the <c>VectorN</c>.</summary>
 		inline T LengthSquared() const
 		{
-			return Vector::LengthSquared(*this);
+			T result = 0;
+
+			for (auto elem : m_data)
+				result += (elem * elem);
+
+			return result;
 		}
 
 		/// <summary>Calculates the length of the <c>VectorN</c>.</summary>
 		/// <returns>The length of the <c>VectorN</c>.</summary>
 		inline T Length() const
 		{
-			return Vector::Length(*this);
+			return static_cast<T>(sqrt(LengthSquared()));
 		}
 
 		/// <summary>Normalizes the <c>VectorN</c>.</summary>
 		/// <returns>A reference to the normalized <c>VectorN</c>.</summary>
 		inline VectorN<T, S>& Normalize()
 		{
-			return Vector::Normalize(*this);
+			T len = Length();
+
+			for (auto& elem : m_data)
+				elem /= len;
+
+			return *this;
 		}
 
 	protected:
 
-		T m_data[S];
+		std::array<T, S> m_data;
 
 	private:
 
 		inline void Assign(const VectorN<T, S>& other)
 		{
-			memcpy(m_data, other.m_data, sizeof(T) * S);
+			std::copy(other.m_data.begin(), other.m_data.end(), m_data.begin());
 		}
 
 		inline void Assign(T fill)
 		{
-			for (size_t i = 0; i < S; ++i)
-				m_data[i] = fill;
+			std::fill(m_data.begin(), m_data.end(), fill);
 		}
 
 	};
@@ -221,7 +231,7 @@ namespace decaf
 	template <typename T, size_t S>
 	inline bool operator == (const VectorN<T, S>& lhs, const VectorN<T, S>& rhs)
 	{
-		return (memcmp(&lhs, &rhs, sizeof(VectorN<T, S>)) == 0);
+		return std::equal(&lhs[0], &lhs[S - 1], &rhs[0], &rhs[S - 1]);
 	}
 
 	template <typename T, size_t S>
@@ -236,7 +246,7 @@ namespace decaf
 		VectorN<T, S> result;
 
 		for (size_t i = 0; i < S; ++i)
-			result = -that[i];
+			result[i] = -that[i];
 
 		return result;
 	}
@@ -339,38 +349,6 @@ namespace decaf
 
 	namespace Vector
 	{
-
-		/// <summary>Calculates the squared length of an n-dimensional <c>Vector</c>.</summary>
-		/// <param name='that'>The <c>Vector</c> to calculate the squared length of.</param>
-		/// <returns>The squared length of <c>Vector</c> '<paramref name='that'/>'.</returns>
-		template <typename T, size_t S>
-		inline T LengthSquared(const VectorN<T, S>& that)
-		{
-			T result = T(0);
-
-			for (size_t i = 0; i < S; ++i)
-				result += (that[i] * that[i]);
-
-			return result;
-		}
-
-		/// <summary>Calculates the length of an n-dimensional <c>Vector</c>.</summary>
-		/// <param name='that'>The <c>Vector</c> to calculate the length of.</param>
-		/// <returns>The length of <c>Vector</c> '<paramref name='that'/>'.</returns>
-		template <typename T, size_t S>
-		inline T Length(const VectorN<T, S>& that)
-		{
-			return static_cast<T>(sqrt(LengthSquared(that)));
-		}
-
-		/// <summary>Normalizes an n-dimensional <c>Vector</c>.</summary>
-		/// <param name='that'>A reference to the <c>Vector</c> to normalize.</param>
-		/// <returns>A reference to the normalized <c>Vector</c>.</returns>
-		template <typename T, size_t S>
-		inline VectorN<T, S>& Normalize(VectorN<T, S>& that)
-		{
-			return (that /= Length(that));
-		}
 		
 		/// <summary>Calculates the dot product of two n-dimensional <c>Vector</c>s.</summary>
 		/// <param name='lhs'>The left-hand operand.</param>
